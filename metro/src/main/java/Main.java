@@ -50,10 +50,41 @@ public class Main {
                     .get(0)
                     .getElementsByTag("tr")
                     .forEach(e->{
-                        String lineNumber = e.child(0).attr("data-sort-value");
-                        String lineName = e.getElementsByTag("span").get(1).attr("title");
-                        Line line = new Line(lineNumber,lineName);
-                        lines.add(line);
+                        try {
+                            String lineNumber = e.child(0).child(0).text();
+                            String lineName = e.getElementsByTag("span").get(1).attr("title");
+                            Line line = new Line(lineNumber,lineName);
+                            lines.add(line);
+                        } catch (Exception ex) {
+                        }
+                    });
+            element.getElementsByTag("table")
+                    .get(3)
+                    .getElementsByTag("tbody")
+                    .get(0)
+                    .getElementsByTag("tr")
+                    .forEach(e->{
+                        try {
+                            String lineNumber = e.child(0).child(0).text();
+                            String lineName = e.getElementsByTag("span").get(1).attr("title");
+                            Line line = new Line(lineNumber,lineName);
+                            lines.add(line);
+                        } catch (Exception ex) {
+                        }
+                    });
+            element.getElementsByTag("table")
+                    .get(4)
+                    .getElementsByTag("tbody")
+                    .get(0)
+                    .getElementsByTag("tr")
+                    .forEach(e->{
+                        try {
+                            String lineNumber = e.child(0).child(0).text();
+                            String lineName = e.getElementsByTag("span").get(1).attr("title");
+                            Line line = new Line(lineNumber,lineName);
+                            lines.add(line);
+                        } catch (Exception ex) {
+                        }
                     });
             return lines;
         } catch (Exception e) {
