@@ -1,6 +1,8 @@
 import Operation.Operation;
 import Parser.Parser;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -17,9 +19,13 @@ public class Main {
         Double expense = staff.stream().mapToDouble(Operation::getExpense).sum();
         System.out.println("Общий расход: " + expense);
         System.out.println("Расходы подробно: ");
-        staff.stream().filter(op->op.getExpense() > 0.0).forEach(operation -> {
-            System.out.println(Parser.getDetails(operation) + " - сумма: " + operation.getExpense());
-        });
+
+        staff.stream()
+                .filter(op->op.getExpense() > 0.0)
+                .collect(Collectors.groupingBy(Parser::getDetails))
+                .forEach((s, operations) ->
+                    System.out.println(s + "  " + operations.stream().mapToDouble(Operation::getExpense).sum())
+                );
 
         System.out.println("------------------------------------------------------------------------------------");
 
@@ -31,9 +37,12 @@ public class Main {
         System.out.println("Общий приход: " + income);
         expense = manualStaff.stream().mapToDouble(Operation::getExpense).sum();
         System.out.println("Общий расход: " + expense);
-        manualStaff.stream().filter(op->op.getExpense() > 0.0).forEach(operation -> {
-            System.out.println(Parser.getDetails(operation) + " - сумма: " + operation.getExpense());
-        });
+        manualStaff.stream()
+                .filter(op->op.getExpense() > 0.0)
+                .collect(Collectors.groupingBy(Parser::getDetails))
+                .forEach((s, operations) ->
+                        System.out.println(s + "  " + operations.stream().mapToDouble(Operation::getExpense).sum())
+                );
     }
 
 }
