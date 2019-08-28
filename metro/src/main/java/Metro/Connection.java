@@ -1,9 +1,25 @@
 package Metro;
 
-import java.util.List;
+import java.util.TreeSet;
 
 public class Connection {
 
-    List<Station> stations;
+    private TreeSet<Station> stations;
+
+    public Connection() {
+
+    }
+
+    public Connection(TreeSet<Station> stations) {
+        this.stations = stations;
+    }
+
+    public TreeSet<Station> getStations() {
+        return stations;
+    }
+
+    public void setStations(TreeSet<Station> stations) {
+        this.stations = stations;
+    }
 
 }

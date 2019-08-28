@@ -1,16 +1,18 @@
+import Metro.Connection;
 import Metro.Line;
+import Metro.ResultObject;
+import Metro.Station;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jsoup.Jsoup;
-import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
-import javax.imageio.ImageIO;
-import java.awt.image.RenderedImage;
 import java.io.File;
-import java.net.URL;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -23,19 +25,41 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Set<Line> lines = parseLines();
+        TreeSet<Line> lines = new TreeSet<>();
+        TreeSet<Station> stations = new TreeSet<>();
+        List<Connection> connections = new ArrayList<>();
+        parseData(lines,stations,connections);
         lines.forEach(line -> {
-            System.out.println(line.getNumber());
-            System.out.println(line.getName());
+            List<Station> lineStations = new ArrayList<>();
+            for (Station station : stations) {
+                if (line.equals(station.getLine())) {
+                    lineStations.add(station);
+                }
+            }
+            line.setStations(lineStations);
         });
 
-        //parseStations();
+        //ResultObject resultObject = new ResultObject(lines,stations,connections);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            mapper.writeValue(new File("data\\result.json"), stations);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            String jsonString = mapper.writeValueAsString(stations);
+            System.out.println(jsonString);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    private static TreeSet<Line> parseLines() {
+    private static void parseData(TreeSet<Line> lines, TreeSet<Station> stations, List<Connection> connections) {
         try {
-            TreeSet<Line> lines = new TreeSet<>();
             Document document = Jsoup.connect(url)
                     .header("Accept-Encoding", "gzip, deflate")
                     .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
@@ -44,80 +68,125 @@ public class Main {
                     .timeout(6000000)
                     .get();
             Element element = document.getElementById("mw-content-text");
-            element.getElementsByTag("table")
-                    .get(2)
-                    .getElementsByTag("tbody")
-                    .get(0)
-                    .getElementsByTag("tr")
-                    .forEach(e->{
-                        try {
-                            String lineNumber = e.child(0).child(0).text();
-                            String lineName = e.getElementsByTag("span").get(1).attr("title");
-                            Line line = new Line(lineNumber,lineName);
-                            lines.add(line);
-                        } catch (Exception ex) {
-                        }
-                    });
-            element.getElementsByTag("table")
-                    .get(3)
-                    .getElementsByTag("tbody")
-                    .get(0)
-                    .getElementsByTag("tr")
-                    .forEach(e->{
-                        try {
-                            String lineNumber = e.child(0).child(0).text();
-                            String lineName = e.getElementsByTag("span").get(1).attr("title");
-                            Line line = new Line(lineNumber,lineName);
-                            lines.add(line);
-                        } catch (Exception ex) {
-                        }
-                    });
-            element.getElementsByTag("table")
-                    .get(4)
-                    .getElementsByTag("tbody")
-                    .get(0)
-                    .getElementsByTag("tr")
-                    .forEach(e->{
-                        try {
-                            String lineNumber = e.child(0).child(0).text();
-                            String lineName = e.getElementsByTag("span").get(1).attr("title");
-                            Line line = new Line(lineNumber,lineName);
-                            lines.add(line);
-                        } catch (Exception ex) {
-                        }
-                    });
-            return lines;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new TreeSet<>();
-    }
+            /*Parse Lines and Stations*/
+            Stream<Integer> numbers = Stream.of(2,3,4);
+            numbers.forEach(n->{
+                element.getElementsByTag("table")
+                        .get(n)
+                        .getElementsByTag("tbody")
+                        .get(0)
+                        .getElementsByTag("tr")
+                        .forEach(e->{
+                            try {
+                                String lineNumber = e.child(0).child(0).text();
+                                String lineName = e.getElementsByTag("span").get(1).attr("title");
+                                String stationName = e.child(1).child(0).text();
 
-    private static void parseStations() {
-        try {
-            File output = new File(path + directoryName);
-            if (output.exists()) {
-                removeFile(output.getPath());
-            }
-            if (! output.mkdir() ) {
-                throw new Exception("Couldn't find output file");
-            }
-            Document document = Jsoup.connect(url)
-                    .userAgent(HttpConnection.DEFAULT_UA)
-                    .referrer(referer)
-                    .get();
-            Element element = document.getElementById("mw-content-text");
-            element.getElementsByTag("table")
-                    .get(2)
-                    .getElementsByTag("tbody")
-                    .get(0)
-                    .getElementsByTag("tr")
-                    .forEach(e->{
-                        //System.out.println(e.text());
-                        String lineNumber = e.child(0).attr("data-sort-value");
-                        String stationName = e.child(1).child(0).text();
-                        System.out.println(lineNumber);
-                        System.out.println(stationName);
+                                Line line = new Line(lineNumber,lineName);
+                                Station station = new Station(stationName,line);
+                                stations.add(station);
+                                lines.add(line);
+                            } catch (Exception ex) {
+                            }
+                        });
+            });
+            /*Parse connections*/
+            numbers = Stream.of(2,3,4);
+            numbers.forEach(n->{
+                element.getElementsByTag("table")
+                        .get(n)
+                        .getElementsByTag("tbody")
+                        .get(0)
+                        .getElementsByTag("tr")
+                        .forEach(e->{
+                            TreeSet<Station> connectionSet = new TreeSet<>();
+                            String lineNumber = null;
+                            String stationName = null;
+                            String connectionLine1 = null;
+                            String connectionName1 = null;
+                            String connectionLine2 = null;
+                            String connectionName2 = null;
+                            String connectionLine3 = null;
+                            String connectionName3 = null;
+                            try {
+                                lineNumber = e.child(0).child(0).text();
+                                stationName = e.child(1).child(0).text();
+                                connectionLine1 = e.child(3).child(0).text();
+                                connectionName1 = e.child(3).child(1).attr("title");
+                                connectionLine2 = e.child(3).child(2).text();
+                                connectionName2 = e.child(3).child(3).attr("title");
+                                connectionLine3 = e.child(3).child(4).text();
+                                connectionName3 = e.child(3).child(5).attr("title");
+                            } catch (Exception ex){
+
+                            }
+                            if (stationName != null && lineNumber != null) {
+                                String finalStationName = stationName;
+                                String finalLineNumber = lineNumber;
+                                Station st = stations.stream()
+                                        .filter(station ->
+                                                station.getName().toLowerCase().equals(finalStationName.toLowerCase())
+                                                        &&
+                                                        station.getLine().getNumber().toLowerCase().equals(finalLineNumber.toLowerCase())
+                                        )
+                                        .findFirst().orElse(null);
+                                if (st != null) {
+                                    //System.out.println("Original station " + st.getName());
+                                    connectionSet.add(st);
+                                }
+                            }
+
+                            if (connectionLine1 != null && connectionName1 != null) {
+                                String finalConnectionLine = connectionLine1;
+                                String finalConnectionName = connectionName1;
+                                Station st = stations.stream()
+                                        .filter(station ->
+                                                finalConnectionName.toLowerCase().contains(station.getName().toLowerCase())
+                                                &&
+                                                station.getLine().getNumber().toLowerCase().equals(finalConnectionLine.toLowerCase())
+                                        )
+                                        .findFirst().orElse(null);
+                                if (st != null) {
+                                    //System.out.println("Connection1 " + st.getName());
+                                    connectionSet.add(st);
+                                }
+                            }
+
+                            if (connectionLine2 != null && connectionName2 != null) {
+                                String finalConnectionLine = connectionLine2;
+                                String finalConnectionName = connectionName2;
+                                Station st = stations.stream()
+                                        .filter(station ->
+                                                finalConnectionName.toLowerCase().contains(station.getName().toLowerCase())
+                                                &&
+                                                station.getLine().getNumber().toLowerCase().equals(finalConnectionLine.toLowerCase())
+                                        )
+                                        .findFirst().orElse(null);
+                                if (st != null) {
+                                    //System.out.println("Connection2 " + st.getName());
+                                    connectionSet.add(st);
+                                }
+                            }
+
+                            if (connectionLine3 != null && connectionName3 != null) {
+                                String finalConnectionLine = connectionLine3;
+                                String finalConnectionName = connectionName3;
+                                Station st = stations.stream()
+                                        .filter(station ->
+                                                finalConnectionName.toLowerCase().contains(station.getName().toLowerCase())
+                                                &&
+                                                station.getLine().getNumber().toLowerCase().equals(finalConnectionLine.toLowerCase())
+                                        )
+                                        .findFirst().orElse(null);
+                                if (st != null) {
+                                    //System.out.println("Connection3 " + st.getName());
+                                    connectionSet.add(st);
+                                }
+                            }
+                            if (connectionSet.size() > 1) {
+                                connections.add(new Connection(connectionSet));
+                            }
+                        });
             });
         } catch (Exception e) {
             e.printStackTrace();

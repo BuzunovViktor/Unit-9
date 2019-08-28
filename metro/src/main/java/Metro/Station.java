@@ -2,21 +2,14 @@ package Metro;
 
 import java.util.Objects;
 
-public class Station {
+public class Station implements Comparable{
 
     private String name;
     private Line line;
-    private Connection connection;
 
-    public Station(String name, Line line, Connection connection) {
+    public Station(String name, Line line) {
         this.name = name;
         this.line = line;
-        this.connection = connection;
-    }
-
-    public Station(Line line, String name) {
-        this.line = line;
-        this.name = name;
     }
 
     public Station(String name) {
@@ -37,14 +30,6 @@ public class Station {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public void setConnection(Connection connection) {
-        this.connection = connection;
     }
 
     @Override
@@ -69,4 +54,11 @@ public class Station {
         return Objects.hash(getLine(), getName());
     }
 
+    @Override
+    public int compareTo(Object o) {
+        if (this == o) return 0;
+        if (!(o instanceof Station)) return 0;
+        Station station = (Station) o;
+        return this.toString().compareTo(station.toString());
+    }
 }
