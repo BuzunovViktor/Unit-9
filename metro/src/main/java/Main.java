@@ -43,18 +43,18 @@ public class Main {
 
         ObjectMapper mapper = new ObjectMapper();
 
-        try {
-            mapper.writeValue(new File("data\\result.json"), stations);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            String jsonString = mapper.writeValueAsString(stations);
-            System.out.println(jsonString);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            mapper.writeValue(new File("data\\result.json"), );
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        try {
+//            String jsonString = mapper.writeValueAsString(stations);
+//            System.out.println(jsonString);
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
