@@ -1,9 +1,13 @@
 package Metro;
 
+import Utils.JSONCompatible;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.TreeSet;
 
-public class Connection {
+public class Connection implements JSONCompatible {
 
+    @JsonProperty("Connection")
     private TreeSet<Station> stations;
 
     public Connection() {

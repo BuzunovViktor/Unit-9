@@ -1,11 +1,19 @@
 package Metro;
 
+import Utils.JSONCompatible;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
-public class Station implements Comparable{
+public class Station implements Comparable, JSONCompatible {
 
+    @JsonProperty("stationName")
     private String name;
+    @JsonProperty("line")
     private Line line;
+
+    public Station() {
+    }
 
     public Station(String name, Line line) {
         this.name = name;

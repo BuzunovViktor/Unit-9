@@ -2,12 +2,10 @@ import Metro.Connection;
 import Metro.Line;
 import Metro.ResultObject;
 import Metro.Station;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import Utils.Converter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,18 +18,52 @@ public class Main {
             "_%D1%81%D1%82%D0%B0%D0%BD%D1%86%D0%B8%D0%B9_%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%BE%D0%B3%D0%BE" +
             "_%D0%BC%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%BE%D0%BB%D0%B8%D1%82%D0%B5%D0%BD%D0%B0";
     private static final String referer = "http://www.google.com";
-    private static final String path = System.getProperty("user.dir") + File.separator;
-    private static final String directoryName = "data";
 
     public static void main(String[] args) {
 
         TreeSet<Line> lines = new TreeSet<>();
         TreeSet<Station> stations = new TreeSet<>();
         List<Connection> connections = new ArrayList<>();
+
+        /*Parse Wiki*/
         parseData(lines,stations,connections);
+        /*Set objects data*/
+        TreeSet<Station> finalStations = stations;
         lines.forEach(line -> {
             List<Station> lineStations = new ArrayList<>();
-            for (Station station : stations) {
+            for (Station station : finalStations) {
+                if (line.equals(station.getLine())) {
+                    lineStations.add(station);
+                }
+            }
+            line.setStations(lineStations);
+        });
+        /*Convert to JSON single file*/
+        ResultObject resultObject = new ResultObject(lines,stations,connections);
+        try {
+            Converter.toJSON(resultObject,"result.json");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /*Clear Objects*/
+        resultObject = null;
+        lines = new TreeSet<>();
+        stations = new TreeSet<>();
+        connections = new ArrayList<>();
+        /*Deserialize Object*/
+        try {
+            resultObject = Converter.toJavaObject("result.json");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /*Set objects data*/
+        assert resultObject != null;
+        ResultObject finalResultObject = resultObject;
+        resultObject.getLines().forEach(line -> {
+            List<Station> lineStations = new ArrayList<>();
+            for (Station station : finalResultObject.getStations()) {
                 if (line.equals(station.getLine())) {
                     lineStations.add(station);
                 }
@@ -39,22 +71,10 @@ public class Main {
             line.setStations(lineStations);
         });
 
-        //ResultObject resultObject = new ResultObject(lines,stations,connections);
-
-        ObjectMapper mapper = new ObjectMapper();
-
-//        try {
-//            mapper.writeValue(new File("data\\result.json"), );
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        try {
-//            String jsonString = mapper.writeValueAsString(stations);
-//            System.out.println(jsonString);
-//        } catch (JsonProcessingException e) {
-//            e.printStackTrace();
-//        }
+        /*Output result*/
+        resultObject.getLines().forEach(line -> {
+            System.out.printf("%-5s %-35s Кол-во станций: %s \n", line.getNumber(),line.getName(),line.getStations().size());
+        });
 
     }
 
@@ -191,16 +211,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static boolean removeFile(String path) {
-        File fileToDelete = new File(path);
-        if (fileToDelete.isDirectory()) {
-            for (File sub : fileToDelete.listFiles()) {
-                removeFile(sub.getAbsolutePath());
-            }
-        }
-        return fileToDelete.delete();
     }
 
 }
